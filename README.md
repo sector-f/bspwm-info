@@ -5,7 +5,7 @@ Tested with `bspwm 0.9.1`.
 
 List the names of the current monitors and the desktops that are on them:
 
-````
+````rust
 extern crate bspwm_info;
 use bspwm_info::*;
 
