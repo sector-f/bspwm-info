@@ -6,6 +6,7 @@ pub fn status() -> Info {
 }
 
 pub struct Info {
+    buffer: String,
     child_stdout: BufReader<ChildStdout>
 }
 
@@ -15,6 +16,7 @@ impl Info {
         let stdout = output.stdout.expect("Failed to get bspc's stdout");
 
         Info {
+            buffer: String::new(),
             child_stdout: BufReader::new(stdout),
         }
     }
@@ -24,9 +26,9 @@ impl Iterator for Info {
     type Item = Wm;
 
     fn next(&mut self) -> Option<Wm> {
-        let mut buffer = String::new();
-        if self.child_stdout.read_line(&mut buffer).unwrap() > 0 {
-            Some(parse_line(&buffer))
+        self.buffer.clear();
+        if self.child_stdout.read_line(&mut self.buffer).unwrap() > 0 {
+            Some(parse_line(&self.buffer))
         } else {
             None
         }
