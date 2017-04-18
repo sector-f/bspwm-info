@@ -6,7 +6,6 @@ pub fn status() -> Info {
 }
 
 pub struct Info {
-    buffer: String,
     child_stdout: BufReader<ChildStdout>
 }
 
@@ -16,7 +15,6 @@ impl Info {
         let stdout = output.stdout.expect("Failed to get bspc's stdout");
 
         Info {
-            buffer: String::new(),
             child_stdout: BufReader::new(stdout),
         }
     }
@@ -26,9 +24,9 @@ impl Iterator for Info {
     type Item = Wm;
 
     fn next(&mut self) -> Option<Wm> {
-        self.buffer.clear();
-        if self.child_stdout.read_line(&mut self.buffer).unwrap() > 0 {
-            Some(parse_line(&self.buffer))
+        let mut buffer = String::new();
+        if self.child_stdout.read_line(&mut buffer).unwrap() > 0 {
+            Some(parse_line(&buffer))
         } else {
             None
         }
@@ -39,94 +37,52 @@ fn parse_line(line: &str) -> Wm {
     let mut monitors: Vec<Monitor> = Vec::new();
 
     for section in line[1..].split(":") {
-        match &section[0..1] {
-            "M" => { // Focused monitor
+        let input = section.chars().nth(0).unwrap();
+        match input {
+            'M' | 'm' => { // monitor
                 monitors.push(
                     Monitor {
                         name: section[1..].to_string(),
                         desktops: Vec::new(),
-                        focused: true,
+                        focused: input.is_uppercase(),
                         layout: None,
                     }
                 );
             },
-            "m" => { // Unfocused monitor
-                monitors.push(
-                    Monitor {
-                        name: section[1..].to_string(),
-                        desktops: Vec::new(),
-                        focused: false,
-                        layout: None,
-                    }
-                );
-            },
-            "O" => { // Occupied focused desktop
+            'O' | 'o' => { // Occupied desktop
                 let desktop = {
                     Desktop {
                         name: section[1..].to_string(),
                         occupied: true,
-                        focused: true,
+                        focused: input.is_uppercase(),
                         urgent: false,
                     }
                 };
                 monitors.last_mut().unwrap().desktops.push(desktop);
             },
-            "o" => { // Occupied unfocused desktop
-                let desktop = {
-                    Desktop {
-                        name: section[1..].to_string(),
-                        occupied: true,
-                        focused: false,
-                        urgent: false,
-                    }
-                };
-                monitors.last_mut().unwrap().desktops.push(desktop);
-            },
-            "F" => { // Free focused desktop
+            'F' | 'f' => { // Free desktop
                 let desktop = {
                     Desktop {
                         name: section[1..].to_string(),
                         occupied: false,
-                        focused: true,
+                        focused: input.is_uppercase(),
                         urgent: false,
                     }
                 };
                 monitors.last_mut().unwrap().desktops.push(desktop);
             },
-            "f" => { // Free unfocused desktop
-                let desktop = {
-                    Desktop {
-                        name: section[1..].to_string(),
-                        occupied: false,
-                        focused: false,
-                        urgent: false,
-                    }
-                };
-                monitors.last_mut().unwrap().desktops.push(desktop);
-            },
-            "U" => { // Urgent focused desktop
+            'U' | 'u' => { // Urgent desktop
                 let desktop = {
                     Desktop {
                         name: section[1..].to_string(),
                         occupied: true,
-                        focused: true,
+                        focused: input.is_uppercase(),
                         urgent: true,
                     }
                 };
                 monitors.last_mut().unwrap().desktops.push(desktop);
             },
-            "u" => { // Urgent unfocused desktop
-                let desktop = {
-                    Desktop {
-                        name: section[1..].to_string(),
-                        occupied: true,
-                        focused: false,
-                        urgent: true,
-                    }
-                };
-                monitors.last_mut().unwrap().desktops.push(desktop);
-            },
-            "L" => { // Layout (tiling or monocle)
+            'L' => { // Layout (tiling or monocle)
                 let layout = {
                     match &section[1..2] {
                         "T" => { Some(Layout::Tiling) }
@@ -169,3 +125,4 @@ pub enum Layout {
     Tiling,
     Monocle,
 }
+
