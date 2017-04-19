@@ -171,8 +171,42 @@ pub struct Desktop {
     pub urgent: bool,
 }
 
+impl Desktop {
+    pub fn status(&self) -> DtopStatus {
+        match self.focused {
+            true => {
+                if self.urgent {
+                    DtopStatus::UrgentFocused
+                } else if self.occupied {
+                    DtopStatus::OccupiedFocused
+                } else {
+                    DtopStatus::FreeFocused
+                }
+            },
+            false => {
+                if self.urgent {
+                    DtopStatus::UrgentUnfocused
+                } else if self.occupied {
+                    DtopStatus::OccupiedUnfocused
+                } else {
+                    DtopStatus::FreeUnfocused
+                }
+            },
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Layout {
     Tiling,
     Monocle,
+}
+
+pub enum DtopStatus {
+    OccupiedFocused,
+    OccupiedUnfocused,
+    FreeFocused,
+    FreeUnfocused,
+    UrgentFocused,
+    UrgentUnfocused,
 }
